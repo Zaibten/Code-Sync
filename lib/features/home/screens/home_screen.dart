@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import '../../../constants/global_variables.dart';
 import '../../../providers/user_provider.dart';
@@ -18,9 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   var textcontroller = TextEditingController();
   bool isLoaded = false;
-
-
-  // OUTPUT (Replace with actual code later)
   String generatedCode = "Generated Output UI\n(Frontend Only - No Backend)";
 
   Future<void> saveCodeToFile() async {
@@ -34,8 +33,38 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving file")),
+        const SnackBar(content: Text("Error saving file")),
       );
+    }
+  }
+
+  Future<void> generateCorrectedCode() async {
+    if (textcontroller.text.isEmpty) return;
+
+    setState(() {
+      isLoaded = true;
+      generatedCode = "Loading...";
+    });
+
+    try {
+      final url = Uri.parse("http://192.168.100.37:9000/fix-code"); // Use emulator localhost
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"code": textcontroller.text}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          generatedCode =
+              "Language: ${data['language']}\n\nErrors:\n${data['errors']}\n\nCorrected Code:\n${data['correctedCode']}";
+        });
+      } else {
+        setState(() => generatedCode = "Error: ${response.body}");
+      }
+    } catch (e) {
+      setState(() => generatedCode = "Error connecting to server: $e");
     }
   }
 
@@ -46,22 +75,18 @@ class _HomeScreenState extends State<HomeScreen> {
       resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-     child: AppBar(
+        child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF151F2B),
-                  Color(0xFF223447),
-                ],
+                colors: [Color(0xFF151F2B), Color(0xFF223447)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
           ),
-
           centerTitle: true,
           title: Column(
             children: [
@@ -74,8 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                 ),
               ),
-
-              // USER DETAILS
               Text(
                 "${user.name} • ${user.email}",
                 style: TextStyle(
@@ -85,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12.0),
@@ -101,77 +123,60 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ),),
-
-      // ======================= BODY ======================
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-             // ---------------- INPUT BOX -----------------
-Container(
-  height: 350, // ⬅⬅ Increased height
-  padding: const EdgeInsets.all(8.0),
-  child: Column(
-    children: [
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-
-          child: Scrollbar(
-            thumbVisibility: true,
-            radius: const Radius.circular(8),
-
-            child: SingleChildScrollView(
-              child: TextFormField(
-                controller: textcontroller,
-                maxLines: null,               
-                keyboardType: TextInputType.multiline,
-                decoration: const InputDecoration(
-                  hintText: 'Write or paste code here...',
-                  border: InputBorder.none,
+              Container(
+                height: 350,
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          radius: const Radius.circular(8),
+                          child: SingleChildScrollView(
+                            child: TextFormField(
+                              controller: textcontroller,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(
+                                hintText: 'Write or paste code here...',
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: 300,
+                      height: 44,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: GlobalVariables.whitecolor,
+                          backgroundColor: GlobalVariables.btncolor,
+                          shape: const StadiumBorder(),
+                        ),
+                        onPressed: generateCorrectedCode,
+                        child: const Text("Generate"),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-
-      const SizedBox(height: 10),
-
-      //------------------ GENERATE BUTTON -------------------
-      SizedBox(
-        width: 300,
-        height: 44,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: GlobalVariables.whitecolor,
-            backgroundColor: GlobalVariables.btncolor,
-            shape: const StadiumBorder(),
-          ),
-          onPressed: () {
-            if (textcontroller.text.isNotEmpty) {
-              setState(() {
-                isLoaded = true;
-                generatedCode = textcontroller.text;
-              });
-            }
-          },
-          child: const Text("Generate"),
-        ),
-      ),
-    ],
-  ),
-),
-
               const SizedBox(height: 10),
-
-              // ---------------- OUTPUT SECTION -----------------
               Container(
                 height: 490,
                 child: isLoaded
@@ -188,63 +193,52 @@ Container(
                               width: double.infinity,
                               color: Colors.grey.shade200,
                               alignment: Alignment.center,
-                              child: Text(
-                                generatedCode,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 15,
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  generatedCode,
+                                  textAlign: TextAlign.left,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 20),
-
-                          // -------- COPY + SAVE BUTTONS -------
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // COPY CODE
                               SizedBox(
                                 width: 180,
                                 height: 50,
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.copy),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        GlobalVariables.btncolor,
-                                    foregroundColor:
-                                        GlobalVariables.whitecolor,
+                                    backgroundColor: GlobalVariables.btncolor,
+                                    foregroundColor: GlobalVariables.whitecolor,
                                   ),
                                   onPressed: () {
                                     Clipboard.setData(
                                       ClipboardData(text: generatedCode),
                                     );
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text("Code copied!")),
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Code copied!")),
                                     );
                                   },
                                   label: const Text('Copy Code'),
                                 ),
                               ),
-
                               const SizedBox(width: 12),
-
-                              // SAVE CODE
                               SizedBox(
                                 width: 150,
                                 height: 50,
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.save),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        GlobalVariables.btncolor,
-                                    foregroundColor:
-                                        GlobalVariables.whitecolor,
+                                    backgroundColor: GlobalVariables.btncolor,
+                                    foregroundColor: GlobalVariables.whitecolor,
                                   ),
                                   onPressed: saveCodeToFile,
                                   label: const Text('Save Code'),
@@ -254,8 +248,6 @@ Container(
                           ),
                         ],
                       )
-
-                    // -------------- DEFAULT LOADER UI -------------------
                     : Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
