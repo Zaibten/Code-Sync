@@ -49,7 +49,7 @@ This project consists of three main components:
 | Frontend | Flutter |
 | Backend | Node.js, Express |
 | Admin Panel | Node.js, Express, HTML/CSS/JS |
-| Storage | File system (for saved code) |
+| Storage | Mongo DB & File system (for saved code) |
 | State Management | Provider (Flutter) |
 
 ---
