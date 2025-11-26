@@ -1,52 +1,55 @@
-# 🛠️ ERROR DETECTOR: Intelligent Error Detection & Management System
+# Code Sync Application
 
-Welcome to **Error Detector**, a comprehensive application designed to detect, log, and manage errors across applications efficiently! Built with **Node.js**, **Flutter**, **React.js (Admin Panel)**, and **MongoDB**, this system empowers developers and admins to quickly identify and resolve errors with ease.  
+[![GitHub Repo](https://img.shields.io/badge/github-zaibten-blue)](https://github.com/zaibten)
 
----
-
-# 🌐 Features
-
-## ⚡ Real-Time Error Detection
-Automatically captures and logs errors from your applications:
-1. Node.js backend integration
-2. Flutter mobile apps
-3. Web applications
-
-## 🖥️ Admin Panel (React.js)
-Monitor and manage errors efficiently via an intuitive dashboard:
-1. View and filter error logs
-2. Mark errors as resolved
-3. Generate reports for analysis
-
-## 🗄️ Robust Database
-Utilizes **MongoDB** for storing error logs securely and efficiently:
-1. Scalable schema design
-2. Fast retrieval and filtering
-3. Reliable and secure data storage
-
-## 📱 Flutter Mobile Interface
-Easily integrates with Flutter apps to report errors automatically:
-1. Real-time error reporting
-2. Push notifications for critical errors
-3. Lightweight and seamless integration
+A full-stack **Code Sync Application** built with **Flutter**, **Node.js**, and **Admin Panel** in Node.js. This app allows users to write, generate, copy, and save code with real-time error detection.  
 
 ---
 
-# 🚀 Why Choose Error Detector?
+## Project Overview
 
-1. **Proactive Monitoring**: Detect errors before they impact users.  
-2. **User-Friendly Dashboard**: React.js admin panel for complete control.  
-3. **Cross-Platform Integration**: Supports Node.js backend and Flutter apps.  
-4. **Analytics & Reporting**: Keep track of recurring issues for better debugging.  
+This project consists of three main components:
+
+1. **Flutter Application (Frontend)**  
+   - Users can write or paste code in a text editor.
+   - Copy or save the generated code locally.
+   - View real-time code outputs.
+   - Professional, responsive UI with scrollable input/output sections.
+
+2. **Node.js Server (Backend)**  
+   - Handles API requests from the Flutter application.
+   - Performs error detection on submitted code.
+   - Provides data for the admin panel and frontend.
+
+3. **Admin Panel (Node.js / Web)**  
+   - Admin can monitor users and their generated code.
+   - Manage app data and view activity logs.
+   - Built using Node.js, Express, and a simple web interface.
 
 ---
 
-# 🛠️ Tech Stack
+## Features
 
-- **Frontend (Admin Panel):** React.js  
-- **Mobile Client:** Flutter (Dart)  
-- **Backend:** Node.js (Express.js)  
-- **Database:** MongoDB  
-- **Error Logging:** Custom API endpoints for real-time logging  
+- User authentication and profile management.
+- Code editor with:
+  - Multi-line input
+  - Scrollable text area
+  - Copy and Save code functionality
+- Real-time error detection for code.
+- Full-width loader animation while generating code.
+- Admin panel to monitor users and code submissions.
+- Professional and responsive UI for both mobile and web.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Flutter |
+| Backend | Node.js, Express |
+| Admin Panel | Node.js, Express, HTML/CSS/JS |
+| Storage | File system (for saved code) |
+| State Management | Provider (Flutter) |
 
 ---
