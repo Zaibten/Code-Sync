@@ -9,6 +9,7 @@ import 'package:badges/badges.dart' as badges;
 import '../features/account/screens/account_screen.dart';
 import '../features/art/screens/art_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/setting/setting.dart';
 
 class BottomBar extends StatefulWidget {
   static const String routeName = 'actual-home';
@@ -51,7 +52,7 @@ class _BottomBarState extends State<BottomBar> {
         children: [
           const HomeScreen(),
           const SavedCodesScreen(),
-          const Text('This Is Setting Scrren'),
+          const SettingsScreen(),
           //const CartScreen(),
         ],
       ),
