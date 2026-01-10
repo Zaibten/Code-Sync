@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final url = Uri.parse("http://192.168.100.39:9000/fix-code"); // Use emulator localhost
+      final url = Uri.parse("https://code-sync-server-kappa.vercel.app/fix-code"); // Use emulator localhost
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

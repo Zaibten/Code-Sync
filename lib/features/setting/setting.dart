@@ -18,7 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 Future<void> showProfileDialog(BuildContext context, String email) async {
   try {
     final response = await http.post(
-      Uri.parse('http://192.168.100.39:9000/profile'), // Replace with your server IP/localhost
+      Uri.parse('https://code-sync-server-kappa.vercel.app/profile'), // Replace with your server IP/localhost
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email}),
     );
@@ -166,7 +166,7 @@ Future<void> showProfileDialog(BuildContext context, String email) async {
 
                             try {
                               final response = await http.post(
-                                Uri.parse('http://192.168.100.39:9000/reset-password'),
+                                Uri.parse('https://code-sync-server-kappa.vercel.app/reset-password'),
                                 headers: {'Content-Type': 'application/json'},
                                 body: jsonEncode({'email': email, 'newPassword': newPass}),
                               );
