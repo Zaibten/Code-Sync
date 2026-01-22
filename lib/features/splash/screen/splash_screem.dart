@@ -23,7 +23,7 @@ class SplashScreen extends StatelessWidget {
       home: Center(
         child: AnimatedSplashScreen(
           splash: Image.asset(
-            'assets/images/logobg.png',
+            'assets/images/codesyncbg.png',
             height: 300,
             width: 300,
             color: Colors.white,
