@@ -262,7 +262,7 @@ mongoose
 
 // User Schema and Model
 const userSchema = new mongoose.Schema({
-  username: String,
+  name: String,
   email: String,
   password: String,
   otp: Number,
@@ -357,7 +357,7 @@ app.get('/home', async (req, res) => {
     (user, index) => `
       <tr>
         <td class="text-center">${index + 1}</td>
-        <td>${user.username}</td>
+        <td>${user.name}</td>
         <td class="text-center">${user.email}</td>
         <td class="text-center">
           ${
