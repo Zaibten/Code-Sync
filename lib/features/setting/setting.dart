@@ -4,6 +4,11 @@ import '../../../constants/global_variables.dart';
 import '../../../providers/user_provider.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../auth/screens/auth_screen.dart';
+
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -84,6 +89,78 @@ Future<void> showProfileDialog(BuildContext context, String email) async {
       const SnackBar(content: Text("Server error")),
     );
   }
+}
+
+
+Future<void> showLogoutDialog(BuildContext context) async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.black87,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.logout, size: 40, color: Colors.redAccent),
+            const SizedBox(height: 15),
+            const Text(
+              "Logout",
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Are you sure you want to logout?",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 25),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () async {
+                    // 1️⃣ Clear local storage
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+
+                    // 2️⃣ Clear provider state
+                    Provider.of<UserProvider>(context, listen: false)
+                        .clearUser();
+
+                    // 3️⃣ Navigate to AuthScreen & remove stack
+                    Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(builder: (_) => const AuthScreen()),
+  (route) => false,
+);
+
+                  },
+                  child: const Text("Yes, Logout"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
  Future<void> showResetPasswordDialog(BuildContext context, String email) async {
@@ -541,8 +618,9 @@ settingsTile(
             trailing:
                 const Icon(Icons.exit_to_app, color: Colors.redAccent),
             onTap: () {
-              // logout logic
-            },
+  showLogoutDialog(context);
+},
+
           ),
 
           const SizedBox(height: 40),
