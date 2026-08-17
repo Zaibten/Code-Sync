@@ -110,7 +110,20 @@ app.post('/save-code', async (req, res) => {
   }
 });
 
+// -------------------- Get Saved Codes from MongoDB --------------------
+app.get('/get-codes', async (req, res) => {
+  try {
+    const { email } = req.query;
 
+    const filter = email ? { email } : {};
+    const codes = await SavedCode.find(filter).sort({ createdAt: -1 });
+
+    res.json({ success: true, data: codes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
 
   // -------------------- OpenAI Init --------------------
 const openai = new OpenAI({
