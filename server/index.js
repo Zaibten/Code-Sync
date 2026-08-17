@@ -11,7 +11,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const OpenAI = require('openai');
 const User = require('./models/user'); // import the model
-
+const SavedCode = require('./models/savedCode');
 const bcrypt = require('bcryptjs'); // for hashing passwords
 // Internal Routes
 const authRouter = require('./routes/auth.js');
@@ -84,7 +84,31 @@ app.post('/profile', async (req, res) => {
 });
 
 
+// -------------------- Save Code to MongoDB --------------------
+app.post('/save-code', async (req, res) => {
+  try {
+    const { email, originalCode, correctedCode, errors, language } = req.body;
 
+    if (!originalCode) {
+      return res.status(400).json({ success: false, error: "originalCode is required" });
+    }
+
+    const saved = new SavedCode({
+      email,
+      originalCode,
+      correctedCode,
+      errors,
+      language,
+    });
+
+    await saved.save();
+
+    res.json({ success: true, message: "Code saved to database", data: saved });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
 
 
 

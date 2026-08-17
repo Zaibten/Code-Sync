@@ -20,22 +20,73 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   var textcontroller = TextEditingController();
   bool isLoaded = false;
+  bool isSaving = false;
+
   String generatedCode = "Generated Output UI\n(Frontend Only - No Backend)";
+
+  // Raw pieces from the API response, kept separately so we can
+  // send clean structured data to MongoDB instead of the formatted string.
+  String? apiLanguage;
+  String? apiErrors;
+  String? apiCorrectedCode;
+
+  final String baseUrl = "https://code-sync-server-kappa.vercel.app";
 
   Future<void> saveCodeToFile() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final file = File("${dir.path}/generated_code.txt");
       await file.writeAsString(generatedCode);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Code saved to: ${file.path}")),
-      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error saving file")),
-      );
+      // Silently ignore here - the combined save handler below will
+      // show one consolidated message to the user.
+      debugPrint("Error saving file locally: $e");
     }
+  }
+
+  Future<bool> saveCodeToDatabase() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+
+    try {
+      final url = Uri.parse("$baseUrl/save-code");
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": user.email,
+          "originalCode": textcontroller.text,
+          "correctedCode": apiCorrectedCode ?? "",
+          "errors": apiErrors ?? "",
+          "language": apiLanguage ?? "",
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("Error saving code to MongoDB: $e");
+      return false;
+    }
+  }
+
+  Future<void> saveCodeEverywhere() async {
+    setState(() => isSaving = true);
+
+    await saveCodeToFile();
+    final dbSaved = await saveCodeToDatabase();
+
+    setState(() => isSaving = false);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          dbSaved
+              ? "Code saved locally and to database"
+              : "Code saved locally, but database save failed",
+        ),
+      ),
+    );
   }
 
   Future<void> generateCorrectedCode() async {
@@ -47,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final url = Uri.parse("https://code-sync-server-kappa.vercel.app/fix-code"); // Use emulator localhost
+      final url = Uri.parse("$baseUrl/fix-code");
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -57,6 +108,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
+          apiLanguage = data['language']?.toString();
+          apiErrors = data['errors']?.toString();
+          apiCorrectedCode = data['correctedCode']?.toString();
+
           generatedCode =
               "Language: ${data['language']}\n\nErrors:\n${data['errors']}\n\nCorrected Code:\n${data['correctedCode']}";
         });
@@ -108,21 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  onPressed: () {
-                    setState(() => isLoaded = false);
-                    textcontroller.clear();
-                  },
-                ),
-              ),
-            ),
-          ],
+          // Refresh icon removed from actions.
         ),
       ),
       body: Padding(
@@ -235,12 +276,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 150,
                                 height: 50,
                                 child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.save),
+                                  icon: isSaving
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(Icons.save),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: GlobalVariables.btncolor,
                                     foregroundColor: GlobalVariables.whitecolor,
                                   ),
-                                  onPressed: saveCodeToFile,
+                                  onPressed: isSaving ? null : saveCodeEverywhere,
                                   label: const Text('Save Code'),
                                 ),
                               ),
