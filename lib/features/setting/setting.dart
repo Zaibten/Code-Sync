@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../constants/global_variables.dart';
-import '../../../providers/user_provider.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
+import '../../../constants/global_variables.dart';
+import '../../../providers/user_provider.dart';
 import '../auth/screens/auth_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,9 +15,48 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  /// Wraps [showDialog] with a smooth scale + fade entrance so every dialog
-  /// in this screen feels consistent and polished.
+class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+    
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    );
+    
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..forward();
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  /// Dialog methods
   Future<T?> _showAnimatedDialog<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -46,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> showProfileDialog(BuildContext context, String email) async {
     try {
       final response = await http.post(
-        Uri.parse('https://code-sync-server-kappa.vercel.app/profile'), // Replace with your server IP/localhost
+        Uri.parse('https://code-sync-server-kappa.vercel.app/profile'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -67,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1B2432), Color(0xFF0B0F17)],
+                    colors: [Color(0xFF151F2B), Color(0xFF1A2A3A)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -161,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
               gradient: const LinearGradient(
-                colors: [Color(0xFF1B2432), Color(0xFF0B0F17)],
+                colors: [Color(0xFF151F2B), Color(0xFF1A2A3A)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -203,14 +242,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () async {
-                        // 1️⃣ Clear local storage
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.clear();
-
-                        // 2️⃣ Clear provider state
                         Provider.of<UserProvider>(context, listen: false).clearUser();
-
-                        // 3️⃣ Navigate to AuthScreen & remove stack
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (_) => const AuthScreen()),
@@ -248,7 +282,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF1B2432), Color(0xFF0B0F17)],
+                  colors: [Color(0xFF151F2B), Color(0xFF1A2A3A)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -381,7 +415,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
               gradient: const LinearGradient(
-                colors: [Color(0xFF1B2432), Color(0xFF0B0F17)],
+                colors: [Color(0xFF151F2B), Color(0xFF1A2A3A)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -439,28 +473,210 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  int _currentIndex = 3;
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
 
-  void onTabTapped(int index) {
-    setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/art');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/saved');
-        break;
-      case 3:
-        break;
-    }
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF151F2B), Color(0xFF223447)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          centerTitle: true,
+          title: Column(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedBuilder(
+                    animation: _fadeAnimation,
+                    builder: (context, _) => Transform.scale(
+                      scale: 1 + 0.08 * _fadeAnimation.value,
+                      child: const Icon(
+                        Icons.settings_rounded,
+                        color: Colors.orangeAccent,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    "Settings",
+                    style: TextStyle(
+                      fontFamily: 'Poppins-Bold',
+                      letterSpacing: 1.0,
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                "${user.name} • ${user.email}",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              _buildProfileCard(user),
+              const SizedBox(height: 24),
+              _buildSectionTitle("Account"),
+              _buildSettingsTile(
+                icon: Icons.person_outline_rounded,
+                title: "Profile",
+                subtitle: "Manage personal information",
+                color: Colors.orangeAccent,
+                onTap: () => showProfileDialog(context, user.email),
+              ),
+              _buildSettingsTile(
+                icon: Icons.lock_outline_rounded,
+                title: "Change Password",
+                subtitle: "Update your account password",
+                color: Colors.blueAccent,
+                onTap: () => showResetPasswordDialog(context, user.email),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionTitle("Application"),
+              _buildSettingsTile(
+                icon: Icons.info_outline_rounded,
+                title: "About App",
+                subtitle: "Version, privacy & legal",
+                color: Colors.purpleAccent,
+                onTap: () => showAboutAppDialog(context),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionTitle("Danger Zone"),
+              _buildSettingsTile(
+                icon: Icons.logout_rounded,
+                title: "Logout",
+                subtitle: "Sign out from this device",
+                color: Colors.redAccent,
+                trailing: const Icon(Icons.exit_to_app_rounded, color: Colors.redAccent),
+                onTap: () => showLogoutDialog(context),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  // ================= SECTION TITLE =================
-  Widget sectionTitle(String title) {
+  Widget _buildProfileCard(user) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, child) => Opacity(
+        opacity: v,
+        child: Transform.translate(offset: Offset(0, (1 - v) * 16), child: child),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 64,
+              width: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    GlobalVariables.btncolor,
+                    GlobalVariables.btncolor.withOpacity(0.6),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: GlobalVariables.btncolor.withOpacity(0.3),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: GlobalVariables.btncolor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "Active",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: GlobalVariables.btncolor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       child: Text(
@@ -475,307 +691,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ================= SETTINGS TILE (with tap-scale animation) =================
-  Widget settingsTile({
+  Widget _buildSettingsTile({
     required IconData icon,
     required String title,
     required String subtitle,
-    Color? iconColor,
+    required Color color,
     VoidCallback? onTap,
     Widget? trailing,
   }) {
-    return _AnimatedSettingsTile(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      iconColor: iconColor,
-      onTap: onTap,
-      trailing: trailing,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-
-      // ================= HOME STYLE APP BAR =================
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF151F2B), Color(0xFF223447)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          title: Column(
-            children: [
-              const Text(
-                "Settings",
-                style: TextStyle(
-                  fontFamily: 'Poppins-Bold',
-                  letterSpacing: 1.0,
-                  fontSize: 20,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                "${user.name} • ${user.email}",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: IconButton(
-                  icon: const Icon(Icons.settings_backup_restore, color: Colors.white),
-                  onPressed: () {
-                    // optional refresh/reset logic
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      // ================= BODY =================
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ================= PROFILE CARD =================
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
-            builder: (context, v, child) => Opacity(
-              opacity: v,
-              child: Transform.translate(offset: Offset(0, (1 - v) * 16), child: child),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  colors: [
-                    GlobalVariables.btncolor.withOpacity(0.25),
-                    Colors.black,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    height: 60,
-                    width: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          GlobalVariables.btncolor,
-                          GlobalVariables.btncolor.withOpacity(0.6),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: GlobalVariables.btncolor.withOpacity(0.4),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.person, color: Colors.white, size: 30),
-                  ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          // ================= ACCOUNT =================
-          sectionTitle("Account"),
-
-          settingsTile(
-            icon: Icons.person_outline,
-            title: "Profile",
-            subtitle: "Manage personal information",
-            onTap: () {
-              final user = Provider.of<UserProvider>(context, listen: false).user;
-              showProfileDialog(context, user.email);
-            },
-          ),
-
-          const SizedBox(height: 12),
-          settingsTile(
-            icon: Icons.lock_outline,
-            title: "Change Password",
-            subtitle: "Update your account password",
-            onTap: () {
-              final user = Provider.of<UserProvider>(context, listen: false).user;
-              showResetPasswordDialog(context, user.email);
-            },
-          ),
-
-          const SizedBox(height: 30),
-
-          // ================= APPLICATION =================
-          sectionTitle("Application"),
-
-          settingsTile(
-            icon: Icons.info_outline,
-            title: "About App",
-            subtitle: "Version, privacy & legal",
-            onTap: () {
-              showAboutAppDialog(context);
-            },
-          ),
-
-          const SizedBox(height: 30),
-
-          // ================= DANGER ZONE =================
-          sectionTitle("Danger Zone"),
-
-          settingsTile(
-            icon: Icons.logout,
-            iconColor: Colors.redAccent,
-            title: "Logout",
-            subtitle: "Sign out from this device",
-            trailing: const Icon(Icons.exit_to_app, color: Colors.redAccent),
-            onTap: () {
-              showLogoutDialog(context);
-            },
-          ),
-
-          const SizedBox(height: 40),
         ],
       ),
-    );
-  }
-}
-
-/// Settings tile with a subtle press-scale and glow-on-tap animation.
-class _AnimatedSettingsTile extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color? iconColor;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  const _AnimatedSettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.iconColor,
-    this.onTap,
-    this.trailing,
-  });
-
-  @override
-  State<_AnimatedSettingsTile> createState() => _AnimatedSettingsTileState();
-}
-
-class _AnimatedSettingsTileState extends State<_AnimatedSettingsTile> {
-  double _scale = 1;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.iconColor ?? GlobalVariables.btncolor;
-    return GestureDetector(
-      onTapDown: widget.onTap == null ? null : (_) => setState(() => _scale = 0.98),
-      onTapUp: widget.onTap == null ? null : (_) => setState(() => _scale = 1),
-      onTapCancel: widget.onTap == null ? null : () => setState(() => _scale = 1),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 110),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF121212),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            gradient: LinearGradient(
+              colors: [color.withOpacity(0.2), color.withOpacity(0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            children: [
-              Container(
-                height: 46,
-                width: 46,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [color.withOpacity(0.9), color.withOpacity(0.5)],
-                  ),
-                ),
-                child: Icon(widget.icon, color: Colors.white),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.subtitle,
-                      style: const TextStyle(fontSize: 12.5, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              widget.trailing ??
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
-            ],
+          child: Icon(
+            icon,
+            color: color,
+            size: 22,
           ),
         ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12.5,
+            color: Colors.grey,
+          ),
+        ),
+        trailing: trailing ??
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.grey.shade400,
+            ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       ),
     );
   }
